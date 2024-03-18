@@ -3,6 +3,8 @@ package worker_test
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -46,24 +48,33 @@ func loopListen(s *http.Server) {
 	}
 }
 
+type JsonRpcRequest struct {
+	Jsonrpc string   `json name:"jsonrpc"`
+	Id      int      `json name:"id"`
+	Method  string   `json name:"method`
+	Params  []string `json name:"params"`
+}
+
 func send(url string, data []byte) error {
-	jsonStr := []byte(`{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "sendTransaction",
-    "params": [
-      "4hXTCkRzt9WyecNzV1XPgCDfGAZzQKNxLXgynz5QDuWWPSAZBZSHptvWRL3BjCvzUXRdKvHL2b7yGrRQcWyaqsaBCncVG7BFggS8w9snUts67BSh3EqKpXLUm5UMHfD7ZBe9GhARjbNQMLJ1QD3Spr6oMTBU6EhdB4RD8CP2xUxr2u3d6fos36PD98XS6oX8TQjLpsMwncs5DAMiD4nNnR8NBfyghGCWvCVifVwvA8B8TJxE1aiyiv2L429BCWfyzAme5sZW8rDb14NeCQHhZbtNqfXhcp2tAnaAT"
-    ]
-  }`)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req := new(JsonRpcRequest)
+	req.Jsonrpc = "2.0"
+	req.Id = 1
+	req.Method = "sendTransaction"
+	req.Params = make([]string, 1)
+	req.Params[0] = base64.StdEncoding.EncodeToString(data)
+	jsonStr, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(req2)
 	if err != nil {
 		return err
 	}
