@@ -6,9 +6,27 @@ package txproc;
 
 
 service TransactionProcessing{
+    rpc Blockhash(Empty) returns (BlockhashResponse) {}
+    rpc RentExemption(RentRequest) returns (RentResponse) {}
     rpc Broadcast(BroadcastRequest) returns (TransactionResult) {}
     rpc Create(stream CreateProgramRequest) returns (stream ProgramResponse) {}
     rpc Upgrade(stream UpgradeProgramRequest) returns (stream ProgramResponse) {}
+}
+
+
+message Empty{
+}
+
+message BlockhashResponse{
+    bytes hash = 1;
+}
+
+message RentRequest{
+    uint64 size = 1;
+}
+
+message RentResponse{
+    uint64 lamports = 2;
 }
 
 message BroadcastRequest{

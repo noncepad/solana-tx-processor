@@ -17,6 +17,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransactionProcessingClient interface {
+	Blockhash(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BlockhashResponse, error)
+	RentExemption(ctx context.Context, in *RentRequest, opts ...grpc.CallOption) (*RentResponse, error)
 	Broadcast(ctx context.Context, in *BroadcastRequest, opts ...grpc.CallOption) (*TransactionResult, error)
 	Create(ctx context.Context, opts ...grpc.CallOption) (TransactionProcessing_CreateClient, error)
 	Upgrade(ctx context.Context, opts ...grpc.CallOption) (TransactionProcessing_UpgradeClient, error)
@@ -28,6 +30,24 @@ type transactionProcessingClient struct {
 
 func NewTransactionProcessingClient(cc grpc.ClientConnInterface) TransactionProcessingClient {
 	return &transactionProcessingClient{cc}
+}
+
+func (c *transactionProcessingClient) Blockhash(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BlockhashResponse, error) {
+	out := new(BlockhashResponse)
+	err := c.cc.Invoke(ctx, "/txproc.TransactionProcessing/Blockhash", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transactionProcessingClient) RentExemption(ctx context.Context, in *RentRequest, opts ...grpc.CallOption) (*RentResponse, error) {
+	out := new(RentResponse)
+	err := c.cc.Invoke(ctx, "/txproc.TransactionProcessing/RentExemption", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *transactionProcessingClient) Broadcast(ctx context.Context, in *BroadcastRequest, opts ...grpc.CallOption) (*TransactionResult, error) {
@@ -105,6 +125,8 @@ func (x *transactionProcessingUpgradeClient) Recv() (*ProgramResponse, error) {
 // All implementations must embed UnimplementedTransactionProcessingServer
 // for forward compatibility
 type TransactionProcessingServer interface {
+	Blockhash(context.Context, *Empty) (*BlockhashResponse, error)
+	RentExemption(context.Context, *RentRequest) (*RentResponse, error)
 	Broadcast(context.Context, *BroadcastRequest) (*TransactionResult, error)
 	Create(TransactionProcessing_CreateServer) error
 	Upgrade(TransactionProcessing_UpgradeServer) error
@@ -115,6 +137,12 @@ type TransactionProcessingServer interface {
 type UnimplementedTransactionProcessingServer struct {
 }
 
+func (UnimplementedTransactionProcessingServer) Blockhash(context.Context, *Empty) (*BlockhashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Blockhash not implemented")
+}
+func (UnimplementedTransactionProcessingServer) RentExemption(context.Context, *RentRequest) (*RentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RentExemption not implemented")
+}
 func (UnimplementedTransactionProcessingServer) Broadcast(context.Context, *BroadcastRequest) (*TransactionResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Broadcast not implemented")
 }
@@ -135,6 +163,42 @@ type UnsafeTransactionProcessingServer interface {
 
 func RegisterTransactionProcessingServer(s *grpc.Server, srv TransactionProcessingServer) {
 	s.RegisterService(&_TransactionProcessing_serviceDesc, srv)
+}
+
+func _TransactionProcessing_Blockhash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionProcessingServer).Blockhash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/txproc.TransactionProcessing/Blockhash",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionProcessingServer).Blockhash(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransactionProcessing_RentExemption_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionProcessingServer).RentExemption(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/txproc.TransactionProcessing/RentExemption",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionProcessingServer).RentExemption(ctx, req.(*RentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _TransactionProcessing_Broadcast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -211,6 +275,14 @@ var _TransactionProcessing_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "txproc.TransactionProcessing",
 	HandlerType: (*TransactionProcessingServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Blockhash",
+			Handler:    _TransactionProcessing_Blockhash_Handler,
+		},
+		{
+			MethodName: "RentExemption",
+			Handler:    _TransactionProcessing_RentExemption_Handler,
+		},
 		{
 			MethodName: "Broadcast",
 			Handler:    _TransactionProcessing_Broadcast_Handler,

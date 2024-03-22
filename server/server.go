@@ -2,8 +2,12 @@ package server
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"sync"
+	"time"
 
+	sgo "github.com/gagliardetto/solana-go"
+	sgorpc "github.com/gagliardetto/solana-go/rpc"
 	pbt "github.com/noncepad/solana-tx-processor/proto/txproc"
 	"github.com/noncepad/solana-tx-processor/worker"
 	"github.com/noncepad/worker-pool/manager"
@@ -22,6 +26,9 @@ type external struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	mgr    pool.Manager[worker.Request, worker.Result]
+	m      *sync.RWMutex
+	hash   sgo.Hash
+	rent   *rentCalculator
 }
 
 func Run(
@@ -29,8 +36,20 @@ func Run(
 	config *Configuration,
 	s *grpc.Server,
 ) error {
+
+	client := sgorpc.New(config.Rpc)
+	out, err := client.GetLatestBlockhash(parentCtx, sgorpc.CommitmentConfirmed)
+	if err != nil {
+		return fmt.Errorf("failed to fetch blockhash: %s", err)
+	}
+	rc := new(rentCalculator)
+	rc.m = &sync.RWMutex{}
+	err = rc.findRent(parentCtx, client)
+	if err != nil {
+		return err
+	}
 	ctx, cancel := context.WithCancel(parentCtx)
-	mgr, err := manager.Create[worker.Request, worker.Result](ctx, 1)
+	mgrTxSend, err := manager.Create[worker.Request, worker.Result](ctx, 1)
 	if err != nil {
 		cancel()
 		return err
@@ -42,39 +61,16 @@ func Run(
 			cancel()
 			return err
 		}
-		mgr.Add(w)
+		mgrTxSend.Add(w)
 	}
-	pbt.RegisterTransactionProcessingServer(s, external{
-		ctx: ctx, cancel: cancel, mgr: mgr,
-	})
+	e1 := new(external)
+	e1.ctx = ctx
+	e1.cancel = cancel
+	e1.mgr = mgrTxSend
+	e1.m = &sync.RWMutex{}
+	e1.hash = out.Value.Blockhash
+	e1.rent = rc
+	pbt.RegisterTransactionProcessingServer(s, e1)
+	go e1.loopBlock(client, 1*time.Minute)
 	return nil
-}
-
-func (e1 external) Broadcast(ctx context.Context, req *pbt.BroadcastRequest) (resp *pbt.TransactionResult, err error) {
-	if req == nil {
-		err = errors.New("blank request")
-		return
-	}
-	if req.Transaction == nil {
-		err = errors.New("blank transaction")
-		return
-	}
-	if len(req.Transaction) == 0 {
-		err = errors.New("blank transaction")
-		return
-	}
-	var r worker.Result
-	r, err = e1.mgr.Submit(ctx, worker.Request{
-		Tx:       req.Transaction,
-		Simulate: req.Simulate,
-	})
-	if err != nil {
-		return
-	}
-	resp = new(pbt.TransactionResult)
-	resp.Signature = make([]byte, len(r.Signature))
-	copy(resp.Signature, r.Signature[:])
-	resp.Slot = r.Slot
-	return
-
 }
