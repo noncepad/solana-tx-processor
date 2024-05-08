@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	sgorpc "github.com/gagliardetto/solana-go/rpc"
-	pbt "github.com/noncepad/solana-tx-processor/proto/txproc"
+	pbt "github.com/noncepad/solpipe-market/go/proto/txproc"
 )
 
 func (e1 *external) RentExemption(ctx context.Context, req *pbt.RentRequest) (resp *pbt.RentResponse, err error) {

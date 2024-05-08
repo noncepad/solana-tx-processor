@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/noncepad/solana-tx-processor/server"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -28,6 +29,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.SetLevel(log.DebugLevel)
 	var l net.Listener
 	url := os.Args[2]
 	if strings.HasPrefix(url, "unix://") {

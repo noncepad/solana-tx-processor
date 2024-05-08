@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	pbt "github.com/noncepad/solana-tx-processor/proto/txproc"
 	"github.com/noncepad/solana-tx-processor/worker"
+	pbt "github.com/noncepad/solpipe-market/go/proto/txproc"
 )
 
 func (e1 *external) Broadcast(ctx context.Context, req *pbt.BroadcastRequest) (resp *pbt.TransactionResult, err error) {

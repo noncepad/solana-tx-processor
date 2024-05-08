@@ -8,9 +8,10 @@ import (
 
 	sgo "github.com/gagliardetto/solana-go"
 	sgorpc "github.com/gagliardetto/solana-go/rpc"
-	pbt "github.com/noncepad/solana-tx-processor/proto/txproc"
 	"github.com/noncepad/solana-tx-processor/worker"
+	pbt "github.com/noncepad/solpipe-market/go/proto/txproc"
 	"github.com/noncepad/worker-pool/manager"
+	"github.com/noncepad/worker-pool/meter"
 	"github.com/noncepad/worker-pool/pool"
 	"google.golang.org/grpc"
 )
@@ -48,8 +49,9 @@ func Run(
 	if err != nil {
 		return err
 	}
+
 	ctx, cancel := context.WithCancel(parentCtx)
-	mgrTxSend, err := manager.Create[worker.Request, worker.Result](ctx, 1)
+	mgrTxSend, err := manager.Create[worker.Request, worker.Result](ctx, 1, meter.Create(s))
 	if err != nil {
 		cancel()
 		return err

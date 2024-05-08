@@ -6,7 +6,7 @@ import (
 	"time"
 
 	sgorpc "github.com/gagliardetto/solana-go/rpc"
-	pbt "github.com/noncepad/solana-tx-processor/proto/txproc"
+	pbt "github.com/noncepad/solpipe-market/go/proto/txproc"
 )
 
 func (e1 *external) loopBlock(
