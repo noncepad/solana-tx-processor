@@ -71,6 +71,7 @@ func Run(
 	e1.hash = out.Value.Blockhash
 	e1.rent = rc
 	pbt.RegisterTransactionProcessingServer(s, e1)
+	// update interval changed from one minute --> blockhash is too old by the time user submits a tx
 	go e1.loopBlock(client, 15*time.Second)
 	return nil
 }
