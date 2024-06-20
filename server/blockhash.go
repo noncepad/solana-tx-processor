@@ -23,7 +23,8 @@ out:
 			break out
 		case <-time.After(updateInterval):
 		}
-		out, err := client.GetLatestBlockhash(e1.ctx, sgorpc.CommitmentConfirmed)
+		// changed from CommitmentConfirmed --> block not being recognized by the lead validator
+		out, err := client.GetLatestBlockhash(e1.ctx, sgorpc.CommitmentFinalized)
 		if err != nil {
 			log.Printf("failed to fetch blockhash: %s", err)
 			continue
