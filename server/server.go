@@ -71,6 +71,6 @@ func Run(
 	e1.hash = out.Value.Blockhash
 	e1.rent = rc
 	pbt.RegisterTransactionProcessingServer(s, e1)
-	go e1.loopBlock(client, 1*time.Minute)
+	go e1.loopBlock(client, 15*time.Second)
 	return nil
 }

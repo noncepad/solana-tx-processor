@@ -23,7 +23,7 @@ out:
 			break out
 		case <-time.After(updateInterval):
 		}
-		out, err := client.GetLatestBlockhash(e1.ctx, sgorpc.CommitmentConfirmed)
+		out, err := client.GetLatestBlockhash(e1.ctx, sgorpc.CommitmentFinalized)
 		if err != nil {
 			log.Printf("failed to fetch blockhash: %s", err)
 			continue
