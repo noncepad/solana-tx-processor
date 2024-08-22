@@ -1,10 +1,12 @@
+# for bot and relay
 NETWORK=MAINNET
-STATE_URL=tcp://[2600:3c01::f03c:93ff:fe65:a252]:30014
-TXPROC_URL=tcp://[2600:3c01::f03c:93ff:fe65:a252]:30012
-MARKET_ID= <txproc market id>
-AUTHORIZER=etc/solpipe-txprox/authorizer.json
-FEE_PAYER=etc/solpipe-txproc/authorizer.json
-BOT= etc/solpipe-txproc/bot.json
-RELAY=etc/solpipe-txproc/relay.json
+AUTHORIZER=/etc/solpipe/txprox/authorizer.json
+# for relay
+RELAY=/etc/solpipe/txproc/relay.json
+# for bot
+BOT=/etc/solpipe/txproc/bot.json
 
-WORKING_DIR=etc/systemd/system
+# for the txproc server itself
+WORKER_COUNT=15
+RPC_URL=http://localhost:8899
+WS_URL=ws://localhost:8900

@@ -1,13 +1,15 @@
 [Unit]
-Description=Solpipe pipeline bot
+Description=Solpipe Txproc Relay
 After=network.target
+Requires=txproc-forwarder.service
 
 [Service]
 Type=simple
-User=root # User running the service
-WorkingDirectory= $WORKING_DIR # Directory where the service executes.
-EnvironmentFile=/etc/default/state
-ExecStart=/usr/bin/solpipe pipeline relay $RELAY $AUTHORIZER # Command to execute the service.
+User=solpipe
+Group=solpipe
+WorkingDirectory=/var/share/solpipe/txproc
+EnvironmentFile=/etc/default/txproc
+ExecStart=/usr/bin/solpipe pipeline relay $RELAY $AUTHORIZER -v 
 Restart=never
 
 [Install]
