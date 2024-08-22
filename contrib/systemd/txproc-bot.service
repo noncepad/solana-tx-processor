@@ -1,0 +1,16 @@
+[Unit]
+Description=Solpipe pipeline bot
+After=network.target
+
+[Service]
+Type=simple
+User=root # User running the service
+WorkingDirectory= $WORKING_DIR # Directory where the service executes.
+EnvironmentFile=/etc/default/state
+ExecStart=/usr/bin/solpipe pipeline bot $BOT # Command to execute the service.
+Restart=never
+
+[Install]
+WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
+
+

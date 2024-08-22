@@ -1,0 +1,10 @@
+NETWORK=MAINNET
+STATE_URL=tcp://[2600:3c01::f03c:93ff:fe65:a252]:30014
+TXPROC_URL=tcp://[2600:3c01::f03c:93ff:fe65:a252]:30012
+MARKET_ID= <txproc market id>
+AUTHORIZER=etc/solpipe-txprox/authorizer.json
+FEE_PAYER=etc/solpipe-txproc/authorizer.json
+BOT= etc/solpipe-txproc/bot.json
+RELAY=etc/solpipe-txproc/relay.json
+
+WORKING_DIR=etc/systemd/system
