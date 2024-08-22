@@ -1,6 +1,6 @@
 # for bot and relay
 NETWORK=MAINNET
-AUTHORIZER=/etc/solpipe/txprox/authorizer.json
+AUTHORIZER=/etc/solpipe/txproc/authorizer.json
 # for relay
 RELAY=/etc/solpipe/txproc/relay.json
 # for bot
