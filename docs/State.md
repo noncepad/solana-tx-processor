@@ -122,3 +122,52 @@ VALIDATOR_HOST=192.168.10.1 NETWORK=TESTNET sudo -u solpipe /usr/bin/solpipe-sta
 * the sleep time may be insufficient. The attach command will only be successful after the validator has downloaded a snapshot from a peer
 
 This command exists once the gRPC connection has been made by the tape server to the validator Geyser endpoint.
+
+## State Server
+
+| *Requirement* | *Minimum* |
+| ---- | ---- |
+| CPU | 4 core, >2.8 GHz |
+| RAM | 75 GB |
+| Disk | 200 GB |
+| Listening Ports | `tcp://[::]:30004` |
+
+Install a state server systemd service at `/etc/systemd/system/state-testnet.service`:
+
+```systemd
+[Unit]
+Description=Solpipe State Indexer
+After=syslog.target network.target remote-fs.target nss-lookup.target
+Wants=systuner.service
+Requires=tape-testnet.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/tmp/bin/solpipe-indexer run -v 
+RuntimeDirectory=solpipe-indexer
+RuntimeDirectoryMode=0750
+EnvironmentFile=/etc/default/state-localnet
+User=solpiper
+Group=solpiper
+LimitNOFILE=1000000
+RestartSec=120
+Restart=never
+
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Set default variables at `/etc/default/state-testnet`:
+
+```bash
+GOMAXPROCS=4
+NETWORK=TESTNET
+TAPE_URL=tcp://localhost:30040
+SNAPSHOT_URL=tcp://localhost:30041
+LISTEN_URL=tcp://:30104
+WORKING_DIR=/var/share/solpiple/testnet/state
+BUFFER_SIZE=100000
+IGNORE_EMPTY_SNAPSHOT="1"
+```
