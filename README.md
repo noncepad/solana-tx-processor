@@ -1,5 +1,14 @@
 # solana-tx-processor
 
+This repository is for validators who want:
+
+* [to sell transaction bandwidth](https://github.com/noncepad/solpipe-market/tree/main/txproc)
+* [to run Solpipe State gRPC endpoint](https://github.com/noncepad/solpipe-market/tree/main/solpipe)
+
+[See this page for State management](/docs/State.md)
+
+## Transaction Processing
+
 This is a:
 
 1. gRPC <-- JSON RPC translating proxy to use in front of a validator and behind a pipeline reverse proxy
