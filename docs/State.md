@@ -2,7 +2,7 @@
 
 The validator refers to the Solana Rust default validator.  [Solpipe](https://solpipe.io/docs/) and [Safejar](https://safejar.io/docs/) CLI tools require access to a state management server.  The *state* server requires access to a *tape* server.  The *tape* server deduplicates chain state updates from the validator received via [the Yellowstone Geyser plugin](https://github.com/rpcpool/yellowstone-grpc).
 
-![State server management](./docs/img/State.png)
+![State server management](./img/State.png)
 
 ## Validator Requirements
 
