@@ -46,45 +46,46 @@ solpipe pipeline init $xTXPROC_MARKET_ID . --create-jar --window=6h
 次に、トランザクション手数料の署名のために、authorizer.json ファイルに約 0.3 Sol を入金します。
 
 
-### Create a Pipeline Instance on Solpipe
-Once you are satisfied with you bot file create your pipeline instance with the following command (you may not adjust this file once the instance is created):
+### Solpipe でパイプラインインスタンスを作成する
+bot ファイルに満足したら、次のコマンドでパイプラインインスタンスを作成します (インスタンスを作成したら、このファイルは調整できません)。
 ```bash
 solpipe pipeline create ./bot.json --fee-payer=authorizer.json
 ```
 
-## Daemonize Pipeline
-Next, copy local pipeline configs to your server.
+## パイプラインをデーモン化
+次に、ローカルのパイプライン設定をサーバーにコピーします。
 
-Create your user:
+ユーザーを作成します:
 ```bash
 sudo useradd -r solpipe
 sudo mkdir -p /var/share/solpipe/txproc
 sudo chown -R solpipe:solpipe /var/share/solpipe
 ```
-Install executables:
+実行ファイルのインストール:
+
 ```bash
 go install github.com/noncepad/solana-tx-processor@main
 sudo install -m 0755 $(which solana-tx-processor) /usr/local/bin
 ```
 
-You should now have solpipe, safejar, and solana-tx-processor executables.
+Solpipe、Safejar、Solana-tx-processor の実行ファイルが揃っているはずです。
 
 ### Create systemd files
 
-To daemonize your pipeline you will need the following systemd files:
+パイプラインをデーモン化するには、次の systemd ファイルが必要です
     * txproc.default
     * txproc-forwarder.service
     * txproc-bot.service
     * txproc-relay.service
 
 ### txproc.default
-The default file holds all environmental variables needed to run service files.
+default ファイルには、サービスファイルを実行するために必要なすべての環境変数が格納されています。
 
-* Real file paths: Replace any placeholder file paths with the actual locations of your files.
+    実ファイルパス: プレースホルダーのファイルパスを、ファイルの実際の場所に置き換えてください。
 
-* RPC and WebSocket URLs: Replace URLs with the specific port numbers your server is using for each connection type.
+    RPC および WebSocket URL: URL を、サーバーが各接続タイプに使用している特定のポート番号に置き換えてください。
 
-It should look something like this: 
+次のようになります。
 ```bash
 # for bot and relay
 NETWORK=MAINNET
@@ -100,7 +101,7 @@ RPC_URL=http://localhost:8899
 WS_URL=ws://localhost:8900
 ```
 ### txproc-forwarder.service
-This file will configure the transaction processing service.
+このファイルは、トランザクション処理サービスを構成します。
 ```bash
 [Unit]
 Description=Solpipe Txproc Forwarder
@@ -122,7 +123,7 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
 ```
 ### txproc-bot.service
-This file will configure the bot service.
+このファイルは、ボットサービスを構成します。\
 ```bash
 [Unit]
 Description=Solpipe Txproc Bot Relay
@@ -141,7 +142,7 @@ Restart=never
 WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
 ```
 ### txproc-relay.service
-This file will configure the relay service.
+このファイルは、リレーサービスを構成します。 
 ```bash
 [Unit]
 Description=Solpipe Txproc Relay
@@ -160,26 +161,23 @@ Restart=never
 [Install]
 WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
 ```
-### Start pipeline processes
-
-Enable the service files:
-```bash
+### パイプラインプロセスの開始 
+サービスファイルを有効にする:```bash
 sudo systemctl enable txproc-bot.service
 sudo systemctl enable txproc-relay.service
 ```
 
-Start the services:
+サービスを開始する:
 ```bash
 sudo systemctl start txproc-bot.service
 sudo systemctl start txproc-relay.service
 ```
-Verify that your services are running:
+サービスが実行されていることを確認する:
 ```bash
 sudo systemctl status txproc-bot.service
 sudo systemctl status txproc-relay.service
 ```
-
-Now, your pipeline server will start automatically on boot and continue running in the background. You can manage your services (start, stop, restart) using systemctl commands as needed.
+これで、パイプラインサーバーは起動時に自動的に起動し、バックグラウンドで実行し続けます。必要に応じて、systemctl コマンドを使用してサービスを管理できます (開始、停止、再起動)。
 
 
 
