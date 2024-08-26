@@ -9,16 +9,14 @@ Here's how it works:
 2. Daemonization: After the initial setup, the remaining operations will be handled by a daemonized process, running in the background.
 
 
-## Pipeline Operator Requirements
+### Pipeline Operator Requirements
 
 * Solpipe and SafeJar CLI. Install [here](https://solpipe.io/docs/getting-started/linux/)
 * Server
 
 
-## Create Pipeline Locally
-
 ### Initialize pipeline
-Initialize pipeline locally with the Solana tx processor marketplace id:
+Initialize pipeline **locally** with the Solana tx processor marketplace id:
 ```bash
 mkdir solpipe-txproc
 cd solpipe-txproc
@@ -59,6 +57,7 @@ solpipe pipeline create ./bot.json --fee-payer=authorizer.json
 ```
 
 ## Daemonize Pipeline
+Next, copy local pipeline configs to your server.
 
 Create your user:
 ```bash
@@ -74,22 +73,117 @@ sudo install -m 0755 $(which solana-tx-processor) /usr/local/bin
 
 You should now have solpipe, safejar, and solana-tx-processor executables.
 
-Next, copy local pipeline configs to server.
+### Create systemd files
 
-
- 
-
-
-
-
-
+To daemonize your pipeline you will need the following systemd files:
+    * txproc.default
+    * txproc-forwarder.service
+    * txproc-bot.service
+    * txproc-relay.service
 
 ### txproc.default
+The default file holds all environmental variables needed to run service files.
+
+* Real file paths: Replace any placeholder file paths with the actual locations of your files.
+
+* RPC and WebSocket URLs: Replace URLs with the specific port numbers your server is using for each connection type.
+
+It should look something like this: 
+```bash
+# for bot and relay
+NETWORK=MAINNET
+AUTHORIZER=/etc/solpipe/txproc/authorizer.json
+# for relay
+RELAY=/etc/solpipe/txproc/relay.json
+# for bot
+BOT=/etc/solpipe/txproc/bot.json
+
+# for the txproc server itself
+WORKER_COUNT=15
+RPC_URL=http://localhost:8899
+WS_URL=ws://localhost:8900
+```
 ### txproc-forwarder.service
+This file will configure the transaction processing service.
+```bash
+[Unit]
+Description=Solpipe Txproc Forwarder
+After=network.target
+
+[Service]
+Type=simple
+User=solpipe
+Group=solpipe
+WorkingDirectory=/var/share/solpipe/txproc
+EnvironmentFile=/etc/default/txproc-relay
+ExecStart=/usr/local/bin/solana-tx-processor server $WORKER_COUNT unix:///run/txproc/server.sock 
+Restart=always
+RestartSec=60
+RuntimeDirectory=txproc
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
+```
 ### txproc-bot.service
+This file will configure the bot service.
+```bash
+[Unit]
+Description=Solpipe Txproc Bot Relay
+After=network.target
+
+[Service]
+Type=simple
+User=solpipe
+Group=solpipe
+WorkingDirectory=/var/share/solpipe/txproc
+EnvironmentFile=/etc/default/txproc
+ExecStart=/usr/bin/solpipe pipeline --fee-payer=$AUTHORIZER $RELAY  -v 
+Restart=never
+
+[Install]
+WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
+```
 ### txproc-relay.service
+This file will configure the relay service.
+```bash
+[Unit]
+Description=Solpipe Txproc Relay
+After=network.target
+Requires=txproc-forwarder.service
 
+[Service]
+Type=simple
+User=solpipe
+Group=solpipe
+WorkingDirectory=/var/share/solpipe/txproc
+EnvironmentFile=/etc/default/txproc
+ExecStart=/usr/bin/solpipe pipeline relay $RELAY $AUTHORIZER -v 
+Restart=never
 
+[Install]
+WantedBy=multi-user.target #Target the service belongs to (e.g., multi-user.target).
+```
+### Start pipeline processes
+
+Enable the service files:
+```bash
+sudo systemctl enable txproc-bot.service
+sudo systemctl enable txproc-relay.service
+```
+
+Start the services:
+```bash
+sudo systemctl start txproc-bot.service
+sudo systemctl start txproc-relay.service
+```
+Verify that your services are running:
+```bash
+sudo systemctl status txproc-bot.service
+sudo systemctl status txproc-relay.service
+```
+
+Now, your pipeline server will start automatically on boot and continue running in the background. You can manage your services (start, stop, restart) using systemctl commands as needed.
 
 
 
