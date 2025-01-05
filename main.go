@@ -91,9 +91,9 @@ func main() {
 	args := os.Args[1:]
 	switch args[0] {
 	case CMD_CLIENT:
-		err = run_client(ctx, args)
+		err = run_client(ctx, args[1:])
 	case CMD_SERVER:
-		err = run_server(ctx, args)
+		err = run_server(ctx, args[1:])
 	default:
 		err = fmt.Errorf("unknown command %s", args[0])
 	}
