@@ -33,6 +33,7 @@ func run_client(ctx context.Context, args []string) error {
 }
 
 func run_server(ctx context.Context, args []string) error {
+	log.Error("rs - 1")
 	var present bool
 	var err error
 	config := new(server.Configuration)
@@ -40,10 +41,12 @@ func run_server(ctx context.Context, args []string) error {
 		return errors.New("no worker count and listen url specified")
 	}
 
-	config.WorkerCount, err = strconv.Atoi(os.Args[1])
+	log.Error("rs - 2")
+	config.WorkerCount, err = strconv.Atoi(args[0])
 	if err != nil {
 		return err
 	}
+	log.Error("rs - 3")
 	log.SetLevel(log.DebugLevel)
 	var l net.Listener
 	url := args[1]
