@@ -11,26 +11,18 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/noncepad/solana-tx-processor/proxy"
+	"git.noncepad.com/pkg/go-solpipe/p2p"
+	sgo "git.noncepad.com/pkg/solana-go"
 	"github.com/noncepad/solana-tx-processor/server"
+	pbt "github.com/noncepad/solpipe-market/go/proto/txproc"
 	log "github.com/sirupsen/logrus"
+	gproxy "golang.org/x/net/proxy"
 	"google.golang.org/grpc"
 )
 
 const (
 	CMD_SERVER = "server"
-	CMD_CLIENT = "client"
 )
-
-func run_client(ctx context.Context, args []string) error {
-	if len(args) < 2 {
-		return errors.New("not enough args: need listen url and proxy url")
-	}
-	config := new(proxy.Configuration)
-	config.ListenUrl = args[0]
-	config.ProxyUrl = args[1]
-	return proxy.Run(ctx, config)
-}
 
 func run_server(ctx context.Context, args []string) error {
 	log.Error("rs - 1")
@@ -60,26 +52,58 @@ func run_server(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	config.Rpc, present = os.LookupEnv("RPC_URL")
-	if !present {
-		return errors.New("no rpc url specified")
+	addr, err := p2p.ParseAddress(os.Getenv("TXPROC_URL"))
+	if err != nil {
+		return err
 	}
+	if addr.Network() != "solpipe" {
+		return errors.New("must use solpipe protocol")
+	}
+	destination, err := sgo.PublicKeyFromBase58(addr.String())
+	if err != nil {
+		return err
+	}
+	fakeAdmin, err := sgo.NewRandomPrivateKey()
+	if err != nil {
+		return err
+	}
+	torD, err := localTorDialer()
+	if err != nil {
+		return err
+	}
+	conn, err := p2p.ConnectToClearNetOrFallbackToTor(ctx, destination, fakeAdmin, nil, torD, []grpc.DialOption{})
+	if err != nil {
+		return err
+	}
+	txprocClient := pbt.NewTransactionProcessingClient(conn)
 	config.TxSenderRpc, present = os.LookupEnv("TX_RPC_URL")
 	if !present {
-		config.TxSenderRpc = config.Rpc
-	}
-	config.Ws, present = os.LookupEnv("WS_URL")
-	if !present {
-		return errors.New("no ws url specified")
+		return errors.New("missing TX_RPC_URL")
 	}
 	s := grpc.NewServer()
 
-	err = server.Run(ctx, config, s)
+	err = server.Run(ctx, config, s, txprocClient)
 	if err != nil {
 		return err
 	}
 	go loopClose(ctx, l, s)
 	return s.Serve(l)
+}
+
+func localTorDialer() (gproxy.ContextDialer, error) {
+	dialer, err := gproxy.SOCKS5("tcp", "localhost:9050", nil, gproxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+	return &torDialer{dialer: dialer}, nil
+}
+
+type torDialer struct {
+	dialer gproxy.Dialer
+}
+
+func (t *torDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return t.dialer.Dial(network, address)
 }
 
 // Do ./txproc server 15 tcp://:50051
@@ -97,8 +121,6 @@ func main() {
 	var err error
 	args := os.Args[1:]
 	switch args[0] {
-	case CMD_CLIENT:
-		err = run_client(ctx, args[1:])
 	case CMD_SERVER:
 		err = run_server(ctx, args[1:])
 	default:
