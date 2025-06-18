@@ -23,16 +23,18 @@ type Result struct {
 
 // Implementation of a worker capable of processing Jobs.
 type simpleWorker struct {
-	ctx    context.Context    // context for cancellation
-	cancel context.CancelFunc // call when cancelling the worker
-	rpc    *sgorpc.Client
-	ws     *sgows.Client
+	ctx       context.Context    // context for cancellation
+	cancel    context.CancelFunc // call when cancelling the worker
+	rpc       *sgorpc.Client
+	txSendRpc *sgorpc.Client
+	ws        *sgows.Client
 }
 
-func Create(parentCtx context.Context, rpcUrl string, wsUrl string) (pool.Worker[Request, Result], error) {
+func Create(parentCtx context.Context, rpcUrl string, txSendRpcUrl string, wsUrl string) (pool.Worker[Request, Result], error) {
 	e1 := new(simpleWorker)
 	e1.ctx, e1.cancel = context.WithCancel(parentCtx)
 	e1.rpc = sgorpc.New(rpcUrl)
+	e1.txSendRpc = sgorpc.New(txSendRpcUrl)
 	var err error
 	e1.ws, err = sgows.Connect(e1.ctx, wsUrl)
 	if err != nil {

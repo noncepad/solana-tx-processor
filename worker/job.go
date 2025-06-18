@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	sgo "github.com/gagliardetto/solana-go"
 	sgorpc "github.com/gagliardetto/solana-go/rpc"
@@ -37,7 +36,7 @@ func (sw *simpleWorker) send(ctx context.Context, data []byte, simulate bool) (s
 		return
 	}
 
-	sig, err = sw.rpc.SendRawTransactionWithOpts(ctx, data, sgorpc.TransactionOpts{
+	sig, err = sw.txSendRpc.SendRawTransactionWithOpts(ctx, data, sgorpc.TransactionOpts{
 		Encoding:            sgo.EncodingBase64,
 		SkipPreflight:       !simulate,
 		PreflightCommitment: sgorpc.CommitmentProcessed,
@@ -45,21 +44,6 @@ func (sw *simpleWorker) send(ctx context.Context, data []byte, simulate bool) (s
 	if err != nil {
 		return
 	}
-	sub, err := sw.ws.SignatureSubscribe(sig, sgorpc.CommitmentFinalized)
-	if err != nil {
-		return
-	}
-	defer sub.Unsubscribe()
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
-	case err = <-sub.Err():
-	case result := <-sub.Response():
-		if result.Value.Err != nil {
-			err = fmt.Errorf("tx failed to confirm: %+v", result.Value.Err)
-		} else {
-			slot = result.Context.Slot
-		}
-	}
+	slot = 0
 	return
 }

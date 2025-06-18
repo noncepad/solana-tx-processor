@@ -64,6 +64,10 @@ func run_server(ctx context.Context, args []string) error {
 	if !present {
 		return errors.New("no rpc url specified")
 	}
+	config.TxSenderRpc, present = os.LookupEnv("TX_RPC_URL")
+	if !present {
+		config.TxSenderRpc = config.Rpc
+	}
 	config.Ws, present = os.LookupEnv("WS_URL")
 	if !present {
 		return errors.New("no ws url specified")

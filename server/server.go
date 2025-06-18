@@ -18,6 +18,7 @@ import (
 
 type Configuration struct {
 	Rpc         string `json:"rpc"`
+	TxSenderRpc string `json:"txrpc"`
 	Ws          string `json:"ws"`
 	WorkerCount int    `json:"count"`
 }
@@ -37,7 +38,6 @@ func Run(
 	config *Configuration,
 	s *grpc.Server,
 ) error {
-
 	client := sgorpc.New(config.Rpc)
 	out, err := client.GetLatestBlockhash(parentCtx, sgorpc.CommitmentConfirmed)
 	if err != nil {
@@ -58,7 +58,7 @@ func Run(
 	}
 
 	for i := 0; i < config.WorkerCount; i++ {
-		w, err := worker.Create(ctx, config.Rpc, config.Ws)
+		w, err := worker.Create(ctx, config.Rpc, config.TxSenderRpc, config.Ws)
 		if err != nil {
 			cancel()
 			return err
